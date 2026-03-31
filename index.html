@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building Energy Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --teal-deep: #0a3d35;
+  --teal-mid: #0d6b5a;
+  --teal-bright: #10a882;
+  --teal-light: #e6f7f3;
+  --amber: #f5a623;
+  --amber-light: #fff8ed;
+  --green: #22c55e;
+  --green-light: #f0fdf4;
+  --navy: #0f1b2d;
+  --text-primary: #0f1b2d;
+  --text-secondary: #4a5568;
+  --text-muted: #94a3b8;
+  --surface: #f8faf9;
+  --white: #ffffff;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-hero: 0 20px 60px rgba(10,61,53,0.25);
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--surface); color: var(--text-primary); min-height: 100vh; line-height: 1.6; }
+
+/* HEADER */
+header { background: var(--white); border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--teal-deep), var(--teal-bright)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-text { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
+.logo-sub { font-size: 11px; font-weight: 500; color: var(--text-muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; }
+.header-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--teal-mid); background: var(--teal-light); padding: 6px 12px; border-radius: 100px; letter-spacing: 0.3px; }
+
+/* MAIN */
+main { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* INTRO */
+.intro { text-align: center; margin-bottom: 48px; animation: fadeUp 0.5s ease both; }
+.intro h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -1px; color: var(--text-primary); line-height: 1.15; margin-bottom: 12px; }
+.intro h1 span { background: linear-gradient(135deg, var(--teal-deep), var(--teal-bright)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.intro p { font-size: 16px; color: var(--text-secondary); max-width: 520px; margin: 0 auto; }
+
+/* FORM */
+.form-card { background: var(--white); border-radius: var(--radius-xl); padding: 40px; box-shadow: var(--shadow-md); border: 1px solid var(--border); margin-bottom: 48px; animation: fadeUp 0.5s 0.1s ease both; }
+.form-section-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+select, input { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; color: var(--text-primary); background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; appearance: none; -webkit-appearance: none; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
+select:focus, input:focus { border-color: var(--teal-bright); box-shadow: 0 0 0 3px rgba(16,168,130,0.1); background: var(--white); }
+.input-hint { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+/* PRIORITY */
+.priority-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.priority-option { position: relative; }
+.priority-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.priority-option label { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 12px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500; font-size: 13px; color: var(--text-secondary); }
+.priority-option label .priority-icon { font-size: 22px; }
+.priority-option input[type="radio"]:checked + label { border-color: var(--teal-bright); background: var(--teal-light); color: var(--teal-deep); box-shadow: 0 0 0 3px rgba(16,168,130,0.1); }
+.priority-option label:hover { border-color: var(--border-hover); background: var(--white); }
+
+.divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+.btn-analyze { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--teal-deep), var(--teal-mid)); color: var(--white); border: none; border-radius: var(--radius-md); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: -0.2px; box-shadow: 0 4px 20px rgba(10,61,53,0.3); }
+.btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(10,61,53,0.35); }
+.btn-analyze:active { transform: translateY(0); }
+
+/* RESULTS */
+#results { display: none; animation: fadeUp 0.5s ease both; }
+.results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.results-title { font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+.results-count { font-size: 13px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+/* HERO CARD */
+.hero-card { background: linear-gradient(145deg, var(--teal-deep) 0%, #0d5a4a 50%, var(--teal-mid) 100%); border-radius: var(--radius-xl); padding: 40px; margin-bottom: 24px; box-shadow: var(--shadow-hero); position: relative; overflow: hidden; color: var(--white); }
+.hero-card::before { content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(16,168,130,0.2) 0%, transparent 70%); pointer-events: none; }
+.hero-card::after { content: ''; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(245,166,35,0.12) 0%, transparent 70%); pointer-events: none; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 100px; padding: 6px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 20px; }
+.hero-badge::before { content: '★'; color: var(--amber); }
+.hero-title { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; line-height: 1.2; }
+.hero-subtitle { font-size: 14px; opacity: 0.75; margin-bottom: 28px; }
+.hero-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.metric-block { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); padding: 16px; }
+.metric-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.65; font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.metric-value { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; margin-bottom: 2px; }
+.metric-value.amber { color: var(--amber); }
+.metric-value.green { color: #4ade80; }
+.metric-unit { font-size: 11px; opacity: 0.6; font-family: 'DM Mono', monospace; }
+.hero-reasons { margin-bottom: 20px; }
+.reasons-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.65; font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+.reason-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 14px; opacity: 0.9; line-height: 1.5; }
+.reason-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-bright); margin-top: 7px; flex-shrink: 0; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-compare { padding: 12px 24px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,0.3); border-radius: var(--radius-sm); color: var(--white); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+.btn-compare:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); }
+.btn-cost { padding: 12px 20px; background: transparent; border: 1.5px solid rgba(255,255,255,0.2); border-radius: var(--radius-sm); color: rgba(255,255,255,0.7); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: default; }
+.btn-expand-hero { padding: 12px 20px; background: transparent; border: 1.5px solid rgba(255,255,255,0.2); border-radius: var(--radius-sm); color: rgba(255,255,255,0.8); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.btn-expand-hero:hover { border-color: rgba(255,255,255,0.4); color: var(--white); }
+
+/* EXPAND PANEL — hero */
+.hero-expand { display: none; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.15); }
+.hero-expand.open { display: block; }
+.expand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.expand-block-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.6; font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+.expand-calc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 13px; }
+.expand-calc-row:last-child { border-bottom: none; }
+.expand-calc-label { opacity: 0.7; }
+.expand-calc-val { font-family: 'DM Mono', monospace; font-weight: 500; }
+.expand-impl { font-size: 13px; opacity: 0.85; line-height: 1.6; }
+.expand-impl li { margin-bottom: 6px; margin-left: 16px; }
+.expand-sources { font-size: 11px; opacity: 0.55; font-family: 'DM Mono', monospace; margin-top: 12px; }
+
+/* REC CARDS */
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.rec-card { background: var(--white); border-radius: var(--radius-lg); padding: 28px; border: 1.5px solid var(--border); box-shadow: var(--shadow-sm); transition: all 0.2s; }
+.rec-card:hover { border-color: var(--teal-bright); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card-rank { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+.card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); margin-bottom: 4px; line-height: 1.3; }
+.card-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+.card-metrics { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.card-metric-row { display: flex; align-items: center; justify-content: space-between; }
+.card-metric-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.card-metric-val { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text-primary); }
+.card-metric-val.amber { color: #d97706; }
+.card-metric-val.green { color: #16a34a; }
+.progress-bar { height: 4px; background: var(--border); border-radius: 100px; margin-top: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--teal-mid), var(--teal-bright)); transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.card-btns { display: flex; gap: 8px; }
+.card-compare-btn { flex: 1; padding: 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+.card-compare-btn:hover { border-color: var(--teal-bright); color: var(--teal-mid); background: var(--teal-light); }
+.card-expand-btn { flex: 1; padding: 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+.card-expand-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.card-expand-btn.open { border-color: var(--teal-bright); color: var(--teal-mid); background: var(--teal-light); }
+
+/* EXPAND PANEL — rec card */
+.card-expand-panel { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.card-expand-panel.open { display: block; }
+.ce-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 8px; margin-top: 14px; }
+.ce-label:first-child { margin-top: 0; }
+.ce-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.ce-row:last-of-type { border-bottom: none; }
+.ce-key { color: var(--text-secondary); }
+.ce-val { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--text-primary); }
+.ce-impl { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.ce-impl li { margin-left: 14px; margin-bottom: 4px; }
+.ce-source { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-top: 10px; }
+
+/* COMPACT CARDS */
+.section-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 20px; }
+.section-divider-line { flex: 1; height: 1px; background: var(--border); }
+.section-divider-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; }
+.remaining-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.compact-card { background: var(--white); border-radius: var(--radius-md); padding: 20px; border: 1.5px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px; transition: all 0.2s; }
+.compact-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+.compact-top { display: flex; align-items: center; gap: 12px; }
+.compact-icon { width: 40px; height: 40px; background: var(--surface); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.compact-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.compact-meta { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+.compact-btns { display: flex; gap: 6px; }
+.compact-btn { flex: 1; padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; text-align: center; }
+.compact-btn:hover { border-color: var(--teal-bright); color: var(--teal-mid); background: var(--teal-light); }
+.compact-expand-panel { display: none; padding-top: 12px; border-top: 1px solid var(--border); }
+.compact-expand-panel.open { display: block; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.6); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--white); border-radius: var(--radius-xl); width: 100%; max-width: 780px; max-height: 85vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.2); transform: translateY(20px) scale(0.98); transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1); }
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-header { padding: 28px 32px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--white); border-radius: var(--radius-xl) var(--radius-xl) 0 0; z-index: 1; }
+.modal-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; color: var(--text-primary); }
+.modal-close { width: 36px; height: 36px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-secondary); transition: all 0.15s; }
+.modal-close:hover { background: var(--border); color: var(--text-primary); }
+.modal-pick { padding: 32px; }
+.modal-pick-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 20px; }
+.pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pick-option { padding: 16px 20px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; text-align: left; }
+.pick-option:hover { border-color: var(--teal-bright); background: var(--teal-light); }
+.pick-option-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.pick-option-meta { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+.modal-compare { padding: 32px; }
+.compare-headers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.compare-header-cell.label-col { display: flex; align-items: center; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+.compare-col-header { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; }
+.compare-col-header.winner { background: var(--teal-light); border-color: var(--teal-bright); }
+.compare-col-name { font-size: 15px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.3px; margin-bottom: 2px; }
+.compare-col-badge { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; font-family: 'DM Mono', monospace; color: var(--teal-mid); }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: center; }
+.compare-row:last-child { border-bottom: none; }
+.compare-row-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+.compare-row-val { font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text-primary); }
+.compare-row-val.better { color: var(--teal-mid); }
+.compare-row-val.worse { color: var(--text-muted); }
+
+/* ── DATA SOURCES SECTION ── */
+.data-sources { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--border); }
+.ds-header { margin-bottom: 32px; }
+.ds-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+.ds-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); margin-bottom: 10px; }
+.ds-desc { font-size: 14px; color: var(--text-secondary); max-width: 600px; line-height: 1.6; }
+.ds-disclaimer { background: var(--amber-light); border: 1.5px solid #fed7aa; border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 28px; display: flex; gap: 12px; align-items: flex-start; }
+.ds-disclaimer-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.ds-disclaimer-text { font-size: 13px; color: #92400e; line-height: 1.5; }
+.ds-disclaimer-text strong { font-weight: 700; }
+.ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ds-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 20px 24px; }
+.ds-card-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.ds-card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+.ds-card-used { font-size: 11px; color: var(--teal-mid); font-family: 'DM Mono', monospace; font-weight: 600; }
+.ds-card-link { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-top: 4px; }
+.ds-card-link a { color: var(--teal-mid); text-decoration: none; }
+.ds-card-link a:hover { text-decoration: underline; }
+.ds-confidence { margin-top: 24px; background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 20px 24px; }
+.ds-conf-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+.ds-conf-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ds-conf-row:last-child { margin-bottom: 0; }
+.ds-conf-label { font-size: 12px; color: var(--text-secondary); width: 160px; flex-shrink: 0; }
+.ds-conf-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.ds-conf-bar { height: 100%; border-radius: 100px; }
+.ds-conf-pct { font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 600; color: var(--text-secondary); width: 36px; text-align: right; }
+
+/* ── EXPLORE SECTION ── */
+.explore-section { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--border); }
+.explore-header { margin-bottom: 32px; }
+.explore-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+.explore-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); margin-bottom: 10px; }
+.explore-desc { font-size: 14px; color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
+.explore-list { display: flex; flex-direction: column; gap: 12px; }
+.explore-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: box-shadow 0.2s; }
+.explore-card:hover { box-shadow: var(--shadow-md); }
+.explore-card-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; cursor: pointer; gap: 16px; }
+.explore-card-left { display: flex; align-items: center; gap: 14px; }
+.explore-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.explore-card-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: var(--text-primary); margin-bottom: 2px; }
+.explore-card-tag { font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 600; color: var(--text-muted); letter-spacing: 0.3px; }
+.explore-card-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.explore-pill { font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; padding: 4px 10px; border-radius: 100px; white-space: nowrap; }
+.pill-amber { background: var(--amber-light); color: #92400e; }
+.pill-green { background: var(--green-light); color: #15803d; }
+.pill-teal { background: var(--teal-light); color: var(--teal-deep); }
+.explore-chevron { font-size: 12px; color: var(--text-muted); transition: transform 0.2s; }
+.explore-card.open .explore-chevron { transform: rotate(180deg); }
+.explore-body { display: none; padding: 0 24px 24px; border-top: 1px solid var(--border); }
+.explore-card.open .explore-body { display: block; }
+.explore-body-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+.eb-block-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+.eb-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.eb-text li { margin-left: 14px; margin-bottom: 5px; }
+.eb-stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.eb-stat-row:last-child { border-bottom: none; }
+.eb-stat-key { color: var(--text-secondary); }
+.eb-stat-val { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--text-primary); }
+.explore-desc-full { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-top: 16px; }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  main { padding: 32px 16px 60px; }
+  header { padding: 16px 20px; }
+  .form-grid, .cards-grid, .explore-body-grid, .ds-grid { grid-template-columns: 1fr; }
+  .hero-metrics { grid-template-columns: 1fr 1fr; }
+  .priority-grid { grid-template-columns: 1fr; }
+  .compare-headers, .compare-row, .pick-grid { grid-template-columns: 1fr; }
+  .expand-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏢</div>
+    <div>
+      <div class="logo-text">Building Energy Advisor</div>
+      <div class="logo-sub">Decarbonization Intelligence</div>
+    </div>
+  </div>
+  <div class="header-badge">Canada · 2026</div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>Find your building's<br><span>optimal path to net zero.</span></h1>
+    <p>Enter your building profile and get ranked decarbonization recommendations with real cost, savings, and carbon data.</p>
+  </div>
+
+  <div class="form-card">
+    <div class="form-section-label">Building Profile</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="province">Province</label>
+        <select id="province">
+          <option value="">Select province…</option>
+          <option value="AB">Alberta</option>
+          <option value="BC">British Columbia</option>
+          <option value="MB">Manitoba</option>
+          <option value="NB">New Brunswick</option>
+          <option value="NL">Newfoundland & Labrador</option>
+          <option value="NS">Nova Scotia</option>
+          <option value="ON">Ontario</option>
+          <option value="PE">Prince Edward Island</option>
+          <option value="QC">Quebec</option>
+          <option value="SK">Saskatchewan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="building-type">Building Type</label>
+        <select id="building-type">
+          <option value="">Select type…</option>
+          <option value="residential-single">Residential – Single Family</option>
+          <option value="residential-condo">Residential – Condo / Stacked</option>
+          <option value="residential-multi">Residential – Multi-Unit (5+)</option>
+          <option value="commercial-office">Commercial – Office</option>
+          <option value="commercial-retail">Commercial – Retail</option>
+          <option value="institutional">Institutional</option>
+          <option value="industrial-light">Industrial – Light Manufacturing</option>
+          <option value="warehouse">Warehouse / Distribution</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="floor-area">Floor Area (sq ft)</label>
+        <input type="number" id="floor-area" placeholder="e.g. 2500" min="100" max="500000">
+        <span class="input-hint">Gross floor area including all floors</span>
+      </div>
+      <div class="form-group">
+        <label for="current-fuel">Current Primary Heating Fuel</label>
+        <select id="current-fuel">
+          <option value="">Select fuel…</option>
+          <option value="natural-gas">Natural Gas</option>
+          <option value="heating-oil">Heating Oil</option>
+          <option value="propane">Propane</option>
+          <option value="electric-baseboard">Electric Baseboard (resistance)</option>
+          <option value="electric-hp">Electric Heat Pump (existing)</option>
+          <option value="district-heating">District Heating / Steam</option>
+          <option value="wood">Wood / Biomass</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label for="energy-spend">Estimated Annual Energy Spend (CAD $)</label>
+        <input type="number" id="energy-spend" placeholder="e.g. 8000" min="0">
+        <span class="input-hint">Combined heating, cooling, and electricity if known</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="form-section-label" style="margin-bottom:16px;">Optimization Priority</div>
+    <div class="priority-grid">
+      <div class="priority-option">
+        <input type="radio" name="priority" id="p-carbon" value="carbon">
+        <label for="p-carbon"><span class="priority-icon">🌿</span>Minimize Carbon</label>
+      </div>
+      <div class="priority-option">
+        <input type="radio" name="priority" id="p-savings" value="savings" checked>
+        <label for="p-savings"><span class="priority-icon">💰</span>Maximize Savings</label>
+      </div>
+      <div class="priority-option">
+        <input type="radio" name="priority" id="p-payback" value="payback">
+        <label for="p-payback"><span class="priority-icon">⚡</span>Shortest Payback</label>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-analyze" onclick="runAnalysis()">Analyze My Building →</button>
+  </div>
+
+  <div id="results"></div>
+
+  <!-- DATA SOURCES -->
+  <div class="data-sources">
+    <div class="ds-header">
+      <div class="ds-eyebrow">Methodology</div>
+      <div class="ds-title">Where the numbers come from</div>
+      <div class="ds-desc">This tool uses publicly available Canadian federal and provincial datasets to generate estimates. All sources are cited below. Calculations are benchmarks, not site-specific energy audits.</div>
+    </div>
+
+    <div class="ds-disclaimer">
+      <div class="ds-disclaimer-icon">⚠️</div>
+      <div class="ds-disclaimer-text">
+        <strong>This is a screening tool, not an energy audit.</strong> Estimates are based on published Canadian averages and benchmarks. Actual savings and costs vary significantly by building age, condition, local contractor rates, and occupancy patterns. Results should be validated by a certified energy advisor (NRCan EnerGuide) before making investment decisions.
+      </div>
+    </div>
+
+    <div class="ds-grid">
+      <div class="ds-card">
+        <div class="ds-card-name">Natural Resources Canada (NRCan)</div>
+        <div class="ds-card-desc">Energy intensity benchmarks by building type, retrofit cost guidance, and the EnerGuide program framework.</div>
+        <div class="ds-card-used">Used for: building energy intensity, retrofit cost ranges</div>
+        <div class="ds-card-link"><a href="https://natural-resources.canada.ca/energy/efficiency" target="_blank">natural-resources.canada.ca →</a></div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-name">Environment & Climate Change Canada (ECCC)</div>
+        <div class="ds-card-desc">National Inventory Report emission factors for all fuel types. Federal carbon price schedule ($80/tonne, 2026).</div>
+        <div class="ds-card-used">Used for: fuel emission factors, carbon price, carbon reduction estimates</div>
+        <div class="ds-card-link"><a href="https://www.canada.ca/en/environment-climate-change/services/climate-change/greenhouse-gas-emissions.html" target="_blank">canada.ca/en/environment-climate-change →</a></div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-name">Canada Energy Regulator (CER)</div>
+        <div class="ds-card-desc">Provincial electricity grid emission intensity factors (kg CO₂/kWh) from the national electricity system model.</div>
+        <div class="ds-card-used">Used for: provincial grid emission factors</div>
+        <div class="ds-card-link"><a href="https://www.cer-rec.gc.ca/en/data-analysis/energy-markets/provincial-territorial-energy-profiles/" target="_blank">cer-rec.gc.ca →</a></div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-name">CMHC / Canada Greener Homes</div>
+        <div class="ds-card-desc">Published retrofit cost ranges for common interventions and available incentive amounts under the Canada Greener Homes program.</div>
+        <div class="ds-card-used">Used for: cost estimates, incentive values</div>
+        <div class="ds-card-link"><a href="https://www.nrcan.gc.ca/energy-efficiency/homes/canada-greener-homes-grant/23441" target="_blank">nrcan.gc.ca/greener-homes →</a></div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-name">RETScreen (NRCan)</div>
+        <div class="ds-card-desc">Clean energy project analysis software with validated savings multipliers for common retrofit interventions across Canadian climate zones.</div>
+        <div class="ds-card-used">Used for: savings multiplier benchmarks by intervention and fuel type</div>
+        <div class="ds-card-link"><a href="https://www.nrcan.gc.ca/maps-tools-and-publications/tools/modelling-tools/retscreen/7465" target="_blank">nrcan.gc.ca/retscreen →</a></div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-name">Provincial Utility Rate Data</div>
+        <div class="ds-card-desc">Residential and commercial electricity and gas rates from Hydro-Québec, BC Hydro, Enbridge, ATCO, and other provincial utilities (Q1 2026).</div>
+        <div class="ds-card-used">Used for: provincial electricity and gas rates per unit</div>
+        <div class="ds-card-link">Source: individual utility tariff schedules</div>
+      </div>
+    </div>
+
+    <div class="ds-confidence">
+      <div class="ds-conf-title">Estimate confidence by calculation type</div>
+      <div class="ds-conf-row">
+        <div class="ds-conf-label">Grid emission factors</div>
+        <div class="ds-conf-bar-wrap"><div class="ds-conf-bar" style="width:92%; background: linear-gradient(90deg, var(--teal-mid), var(--teal-bright));"></div></div>
+        <div class="ds-conf-pct">High</div>
+      </div>
+      <div class="ds-conf-row">
+        <div class="ds-conf-label">Fuel emission factors</div>
+        <div class="ds-conf-bar-wrap"><div class="ds-conf-bar" style="width:95%; background: linear-gradient(90deg, var(--teal-mid), var(--teal-bright));"></div></div>
+        <div class="ds-conf-pct">High</div>
+      </div>
+      <div class="ds-conf-row">
+        <div class="ds-conf-label">Installation cost ranges</div>
+        <div class="ds-conf-bar-wrap"><div class="ds-conf-bar" style="width:62%; background: linear-gradient(90deg, var(--amber), #fbbf24);"></div></div>
+        <div class="ds-conf-pct">Moderate</div>
+      </div>
+      <div class="ds-conf-row">
+        <div class="ds-conf-label">Annual savings estimates</div>
+        <div class="ds-conf-bar-wrap"><div class="ds-conf-bar" style="width:55%; background: linear-gradient(90deg, var(--amber), #fbbf24);"></div></div>
+        <div class="ds-conf-pct">Moderate</div>
+      </div>
+      <div class="ds-conf-row">
+        <div class="ds-conf-label">Payback period</div>
+        <div class="ds-conf-bar-wrap"><div class="ds-conf-bar" style="width:45%; background: linear-gradient(90deg, #f87171, #fca5a5);"></div></div>
+        <div class="ds-conf-pct">Indicative</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPLORE INTERVENTIONS -->
+  <div class="explore-section">
+    <div class="explore-header">
+      <div class="explore-eyebrow">Reference Guide</div>
+      <div class="explore-title">Explore decarbonization options</div>
+      <div class="explore-desc">Not sure where to start? Browse the seven intervention types this tool models — what they are, what they cost, what they save, and how to get started.</div>
+    </div>
+    <div class="explore-list" id="exploreList"></div>
+  </div>
+</main>
+
+<!-- COMPARE MODAL -->
+<div class="modal-overlay" id="compareModal" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Compare Options</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const PROVINCE_DATA = {
+  AB: { gridFactor: 0.54,  gasRate: 0.055, electricRate: 0.145, label: 'Alberta' },
+  BC: { gridFactor: 0.015, gasRate: 0.065, electricRate: 0.120, label: 'British Columbia' },
+  MB: { gridFactor: 0.003, gasRate: 0.058, electricRate: 0.085, label: 'Manitoba' },
+  NB: { gridFactor: 0.30,  gasRate: 0.070, electricRate: 0.115, label: 'New Brunswick' },
+  NL: { gridFactor: 0.025, gasRate: 0.080, electricRate: 0.130, label: 'Newfoundland' },
+  NS: { gridFactor: 0.57,  gasRate: 0.075, electricRate: 0.160, label: 'Nova Scotia' },
+  ON: { gridFactor: 0.03,  gasRate: 0.065, electricRate: 0.115, label: 'Ontario' },
+  PE: { gridFactor: 0.06,  gasRate: 0.085, electricRate: 0.175, label: 'PEI' },
+  QC: { gridFactor: 0.002, gasRate: 0.060, electricRate: 0.075, label: 'Quebec' },
+  SK: { gridFactor: 0.65,  gasRate: 0.052, electricRate: 0.135, label: 'Saskatchewan' },
+};
+
+const FUEL_LABELS = {
+  'natural-gas': 'Natural Gas', 'heating-oil': 'Heating Oil', 'propane': 'Propane',
+  'electric-baseboard': 'Electric Baseboard', 'electric-hp': 'Electric Heat Pump',
+  'district-heating': 'District Heating', 'wood': 'Wood / Biomass',
+};
+
+const BUILDING_LABELS = {
+  'residential-single': 'Single Family', 'residential-condo': 'Condo / Stacked',
+  'residential-multi': 'Multi-Unit (5+)', 'commercial-office': 'Commercial Office',
+  'commercial-retail': 'Commercial Retail', 'institutional': 'Institutional',
+  'industrial-light': 'Light Industrial', 'warehouse': 'Warehouse / Distribution',
+};
+
+const INTERVENTIONS = [
+  {
+    id: 'ashp', name: 'Air-Source Heat Pump', icon: '♨️', category: 'Electrification',
+    costRange: [8000, 20000],
+    savingsMultiplier: { 'natural-gas': 0.45, 'heating-oil': 0.55, 'propane': 0.50, 'electric-baseboard': 0.40, 'electric-hp': 0.05, 'district-heating': 0.20, 'wood': 0.30 },
+    carbonMultiplier: { 'natural-gas': 0.55, 'heating-oil': 0.65, 'propane': 0.58, 'electric-baseboard': 0.45, 'electric-hp': 0.05, 'district-heating': 0.25, 'wood': 0.15 },
+    paybackBase: 8,
+    suitability: { 'residential-single': 1.0, 'residential-condo': 0.7, 'residential-multi': 0.8, 'commercial-office': 0.7, 'commercial-retail': 0.7, 'institutional': 0.6, 'industrial-light': 0.5, 'warehouse': 0.4 },
+    description: 'Moves heat from outside air into your building using refrigerant cycles — achieving 2–4x the efficiency of electric resistance heating. Modern cold-climate units operate effectively down to −30°C.',
+    incentives: ['Canada Greener Homes Grant (up to $5,000)', 'Provincial top-ups vary by region'],
+    exploreData: {
+      whatItIs: 'A heat pump that extracts thermal energy from outdoor air and moves it indoors for heating — or reverses the process for cooling. Unlike furnaces that generate heat, heat pumps transfer it, achieving 200–400% efficiency (COP 2–4).',
+      typicalCost: '$8,000 – $20,000 installed (single-zone to multi-zone)',
+      typicalSavings: '35–55% reduction in heating costs vs. fossil fuels',
+      paybackRange: '6–12 years (faster with incentives)',
+      bestFor: 'Residential buildings in most Canadian provinces; most effective where grid emissions are low (QC, BC, MB, ON)',
+      implementation: ['Get an EnerGuide home evaluation to confirm sizing', 'Obtain 3 quotes from licensed HVAC contractors', 'Apply for Canada Greener Homes Grant before work begins', 'Consider cold-climate rated units (HSPF2 ≥ 8.2) for Prairie provinces', 'Existing ductwork can often be reused for ducted systems'],
+      sources: 'NRCan Canada Greener Homes program; CMHC retrofit guide 2024; ASHRAE 90.1',
+    },
+  },
+  {
+    id: 'gshp', name: 'Ground-Source Heat Pump', icon: '🌍', category: 'Electrification',
+    costRange: [20000, 50000],
+    savingsMultiplier: { 'natural-gas': 0.55, 'heating-oil': 0.65, 'propane': 0.60, 'electric-baseboard': 0.50, 'electric-hp': 0.10, 'district-heating': 0.25, 'wood': 0.40 },
+    carbonMultiplier: { 'natural-gas': 0.65, 'heating-oil': 0.75, 'propane': 0.70, 'electric-baseboard': 0.55, 'electric-hp': 0.10, 'district-heating': 0.30, 'wood': 0.20 },
+    paybackBase: 14,
+    suitability: { 'residential-single': 0.7, 'residential-condo': 0.3, 'residential-multi': 0.5, 'commercial-office': 0.9, 'commercial-retail': 0.6, 'institutional': 1.0, 'industrial-light': 0.8, 'warehouse': 0.6 },
+    description: 'Uses stable ground temperatures (8–12°C year-round in Canada) via buried loops for higher efficiency than air-source systems. Requires land access for horizontal loops or drilling for vertical boreholes.',
+    incentives: ['NRC IRAP for commercial buildings', 'Clean Growth Program', 'Canada Greener Homes Loan ($40K interest-free)'],
+    exploreData: {
+      whatItIs: 'Buries refrigerant or water loops underground (or in a water body) to exchange heat with the earth. Ground temperatures are stable year-round, giving COP of 3–5 — higher than air-source in cold winters. Suitable for both heating and cooling.',
+      typicalCost: '$20,000 – $50,000+ (residential); $100K+ for large commercial',
+      typicalSavings: '50–70% vs. fossil fuel heating',
+      paybackRange: '10–20 years',
+      bestFor: 'Institutions, large commercial buildings, and rural single-family homes with land access. Strongest ROI in provinces with low electricity rates (QC, MB, BC)',
+      implementation: ['Commission a geothermal feasibility assessment', 'Determine loop type: horizontal (more land, less drilling) vs. vertical (small footprint, higher cost)', 'Secure drilling permits from municipal authority', 'Design to NRCan CanGEA standards', 'Pair with radiant floor heating for maximum efficiency'],
+      sources: 'CanGEA (Canadian GeoExchange Coalition); NRCan RETScreen; ASHRAE Handbook HVAC Systems',
+    },
+  },
+  {
+    id: 'envelope', name: 'Building Envelope Upgrade', icon: '🏠', category: 'Efficiency',
+    costRange: [5000, 25000],
+    savingsMultiplier: { 'natural-gas': 0.25, 'heating-oil': 0.28, 'propane': 0.26, 'electric-baseboard': 0.32, 'electric-hp': 0.20, 'district-heating': 0.22, 'wood': 0.22 },
+    carbonMultiplier: { 'natural-gas': 0.25, 'heating-oil': 0.28, 'propane': 0.26, 'electric-baseboard': 0.32, 'electric-hp': 0.20, 'district-heating': 0.22, 'wood': 0.22 },
+    paybackBase: 10,
+    suitability: { 'residential-single': 1.0, 'residential-condo': 0.9, 'residential-multi': 0.9, 'commercial-office': 0.8, 'commercial-retail': 0.7, 'institutional': 0.8, 'industrial-light': 0.6, 'warehouse': 0.5 },
+    description: 'Reduces heat loss at the source through insulation upgrades, air sealing, and window replacement. Technology-agnostic — stacks effectively with any heating system change.',
+    incentives: ['Canada Greener Homes Grant (up to $5,600)', 'EnerGuide evaluation required to qualify', 'Some provinces offer top-up grants'],
+    exploreData: {
+      whatItIs: 'A set of measures that reduce the rate at which your building loses heat to the outdoors. The building envelope — walls, roof, foundation, windows, and air barrier — is responsible for 30–50% of a typical Canadian building\'s heating load. Improving it reduces demand before you address the heating system.',
+      typicalCost: '$5,000 – $25,000 (varies widely by scope and building age)',
+      typicalSavings: '20–35% heating cost reduction; stacks with other upgrades',
+      paybackRange: '8–14 years (standalone); faster when combined with heating system upgrade',
+      bestFor: 'Pre-2000 buildings in all provinces. Essential first step before right-sizing a new heating system — an oversized heat pump in a leaky building is an expensive mistake.',
+      implementation: ['Book a certified EnerGuide energy audit to identify priority areas', 'Air sealing is typically highest ROI — attic hatches, penetrations, rim joists', 'Insulate attic to minimum R-50 (R-60 in Prairie provinces)', 'Consider exterior insulation to avoid thermal bridging', 'Triple-pane windows for extreme climates; double-pane low-e elsewhere'],
+      sources: 'NRCan EnerGuide program; Canada Greener Homes technical guide; CMHC Healthy Housing',
+    },
+  },
+  {
+    id: 'solar', name: 'Solar PV System', icon: '☀️', category: 'Generation',
+    costRange: [15000, 40000],
+    savingsMultiplier: { 'natural-gas': 0.20, 'heating-oil': 0.18, 'propane': 0.18, 'electric-baseboard': 0.45, 'electric-hp': 0.40, 'district-heating': 0.20, 'wood': 0.20 },
+    carbonMultiplier: { 'natural-gas': 0.15, 'heating-oil': 0.14, 'propane': 0.14, 'electric-baseboard': 0.50, 'electric-hp': 0.45, 'district-heating': 0.15, 'wood': 0.15 },
+    paybackBase: 12,
+    suitability: { 'residential-single': 0.9, 'residential-condo': 0.3, 'residential-multi': 0.6, 'commercial-office': 0.8, 'commercial-retail': 0.9, 'institutional': 0.9, 'industrial-light': 1.0, 'warehouse': 1.0 },
+    description: 'Roof-mounted photovoltaic panels convert sunlight into electricity, offsetting grid consumption. Value depends heavily on electricity rates and net metering policy in your province.',
+    incentives: ['Canada Greener Homes Loan ($40K interest-free)', 'Net metering available in all provinces (varies)', 'SR&ED tax credit for commercial R&D installations'],
+    exploreData: {
+      whatItIs: 'Photovoltaic panels installed on your roof or ground-mount convert solar radiation into DC electricity, which an inverter converts to AC for use in the building. Excess generation is exported to the grid under net metering agreements and credited to your bill.',
+      typicalCost: '$15,000 – $40,000 for 8–15 kW residential; $50K–$300K+ commercial',
+      typicalSavings: '40–60% electricity bill reduction in high-irradiance provinces',
+      paybackRange: '8–15 years (residential); 6–10 years (commercial with SR&ED)',
+      bestFor: 'Electrically heated buildings and buildings with high daytime electricity loads. Most cost-effective in provinces with high electricity rates (NS, PEI, NB) or strong net metering (BC, AB, ON)',
+      implementation: ['Get a solar site assessment (shading, roof age, orientation)', 'Confirm net metering terms with your utility before proceeding', 'Size system to your annual consumption, not peak load', 'Choose Tier 1 panels (Jinko, LONGi, Canadian Solar) with 25-yr warranty', 'Consider battery storage only if grid reliability is a concern — ROI is rarely positive in Canada currently'],
+      sources: 'CanSIA (Canadian Solar Industries Association); NRCAN RETScreen; provincial utility net metering tariffs',
+    },
+  },
+  {
+    id: 'smart-controls', name: 'Smart Building Controls', icon: '🤖', category: 'Controls',
+    costRange: [2000, 12000],
+    savingsMultiplier: { 'natural-gas': 0.15, 'heating-oil': 0.15, 'propane': 0.14, 'electric-baseboard': 0.20, 'electric-hp': 0.14, 'district-heating': 0.18, 'wood': 0.10 },
+    carbonMultiplier: { 'natural-gas': 0.15, 'heating-oil': 0.15, 'propane': 0.14, 'electric-baseboard': 0.20, 'electric-hp': 0.14, 'district-heating': 0.18, 'wood': 0.10 },
+    paybackBase: 4,
+    suitability: { 'residential-single': 0.8, 'residential-condo': 0.9, 'residential-multi': 0.9, 'commercial-office': 1.0, 'commercial-retail': 0.9, 'institutional': 1.0, 'industrial-light': 0.9, 'warehouse': 0.9 },
+    description: 'Smart thermostats, occupancy sensors, and automated scheduling eliminate conditioning of unoccupied spaces. Fastest payback of any intervention category — 3–5 years in commercial buildings.',
+    incentives: ['Eligible under some utility demand-response programs', 'May qualify for commercial energy efficiency rebates (varies by utility)'],
+    exploreData: {
+      whatItIs: 'A range of hardware and software that automates when and how much your building is heated, cooled, ventilated, and lit. From simple programmable thermostats ($50–$500) to full Building Automation Systems (BAS) with zone-level control, sensors, and analytics.',
+      typicalCost: '$2,000 – $12,000 (residential to mid-size commercial)',
+      typicalSavings: '12–20% total energy reduction; up to 30% in commercial with occupancy sensors',
+      paybackRange: '2–6 years — consistently the fastest-payback upgrade',
+      bestFor: 'All building types. Especially high-value in commercial and institutional buildings with variable occupancy schedules. Often the right first step before capital-intensive upgrades.',
+      implementation: ['Audit current thermostat and controls setup', 'For residential: install smart thermostat (Nest, Ecobee) — DIY-friendly', 'For commercial: engage a mechanical engineer for BAS specification', 'Add CO₂/occupancy sensors to ventilation zones for demand-controlled ventilation', 'Review utility demand-response programs — passive load shifting can generate credits'],
+      sources: 'ASHRAE 90.1 controls requirements; NRCan commercial building energy benchmarking; CBOC (Commercial Building Optimization Consortium)',
+    },
+  },
+  {
+    id: 'dual-energy', name: 'Dual-Energy System', icon: '⚡', category: 'Hybrid',
+    costRange: [6000, 18000],
+    savingsMultiplier: { 'natural-gas': 0.30, 'heating-oil': 0.38, 'propane': 0.35, 'electric-baseboard': 0.10, 'electric-hp': 0.05, 'district-heating': 0.15, 'wood': 0.25 },
+    carbonMultiplier: { 'natural-gas': 0.32, 'heating-oil': 0.40, 'propane': 0.36, 'electric-baseboard': 0.10, 'electric-hp': 0.05, 'district-heating': 0.15, 'wood': 0.26 },
+    paybackBase: 7,
+    suitability: { 'residential-single': 0.9, 'residential-condo': 0.8, 'residential-multi': 0.8, 'commercial-office': 0.7, 'commercial-retail': 0.6, 'institutional': 0.5, 'industrial-light': 0.4, 'warehouse': 0.3 },
+    description: 'Pairs a heat pump for mild-weather operation with an existing fossil fuel backup for extreme cold. Lower upfront cost than full electrification with meaningful decarbonization — an effective transition strategy.',
+    incentives: ['Canada Greener Homes eligible', 'Énergir dual-energy preferential rate (Quebec)', 'Some provincial utilities offer hybrid system incentives'],
+    exploreData: {
+      whatItIs: 'A dual-energy (or hybrid) system runs a heat pump as the primary heating source during mild temperatures, then automatically switches to a gas or oil backup when outdoor temperatures drop below an efficiency threshold (typically −10°C to −15°C). This captures most of the savings without requiring a cold-climate rated heat pump.',
+      typicalCost: '$6,000 – $18,000 (lower if existing furnace is retained as backup)',
+      typicalSavings: '25–40% vs. fossil-only heating',
+      paybackRange: '5–10 years',
+      bestFor: 'Buildings in QC, ON, and Atlantic provinces where Énergir/utility dual-energy rates apply. Good interim strategy for buildings not yet ready for full electrification (old wiring, poor insulation).',
+      implementation: ['Confirm dual-energy rate availability with your gas utility', 'Install a heat pump sized for ~80% of peak load (not 100%)', 'Set fuel changeover point based on local electricity vs. gas price crossover', 'Retain existing furnace/boiler as backup — reduces capital cost significantly', 'Plan full electrification as envelope upgrades proceed over time'],
+      sources: 'Énergir dual-energy program documentation; Hydro-Québec dual-energy tariff; NRCan hybrid heat pump guidance',
+    },
+  },
+  {
+    id: 'led-lighting', name: 'LED + Lighting Controls', icon: '💡', category: 'Efficiency',
+    costRange: [1500, 10000],
+    savingsMultiplier: { 'natural-gas': 0.05, 'heating-oil': 0.05, 'propane': 0.05, 'electric-baseboard': 0.14, 'electric-hp': 0.12, 'district-heating': 0.08, 'wood': 0.06 },
+    carbonMultiplier: { 'natural-gas': 0.04, 'heating-oil': 0.04, 'propane': 0.04, 'electric-baseboard': 0.14, 'electric-hp': 0.12, 'district-heating': 0.08, 'wood': 0.05 },
+    paybackBase: 3,
+    suitability: { 'residential-single': 0.6, 'residential-condo': 0.7, 'residential-multi': 0.8, 'commercial-office': 1.0, 'commercial-retail': 1.0, 'institutional': 1.0, 'industrial-light': 1.0, 'warehouse': 1.0 },
+    description: 'Replacing fluorescent and incandescent fixtures with LED reduces lighting energy consumption by 50–75%. Adding occupancy sensors and daylight controls pushes savings further. Shortest payback of any upgrade.',
+    incentives: ['Utility rebates widely available across all provinces', 'saveONenergy (ON), BC Hydro Power Smart (BC), Efficiency Nova Scotia', 'EfficiencyPEI commercial programs'],
+    exploreData: {
+      whatItIs: 'LED (Light Emitting Diode) technology uses 50–75% less electricity than fluorescent (T8/T12) and 85% less than incandescent, with a 50,000+ hour lifespan vs. 10,000 for fluorescent. Paired with occupancy sensors and daylight harvesting controls, total lighting energy can be reduced by 60–80% in commercial buildings.',
+      typicalCost: '$1,500 – $10,000 (residential to mid-size commercial retrofit)',
+      typicalSavings: '50–75% of lighting energy; 5–15% of total building energy in commercial',
+      paybackRange: '1–4 years — shortest of any building upgrade',
+      bestFor: 'Commercial, retail, institutional, and warehouse buildings with high lighting loads and long operating hours. Residential impact is smaller but still positive.',
+      implementation: ['Conduct a lighting audit to map fixture types, wattage, and hours of use', 'Specify DLC-listed (DesignLights Consortium) fixtures to qualify for utility rebates', 'Add occupancy/vacancy sensors in low-traffic areas (corridors, storage, washrooms)', 'Consider daylight sensors near windows for automatic dimming', 'Check utility rebate programs before purchasing — can cover 30–50% of project cost'],
+      sources: 'DesignLights Consortium (DLC) qualified products list; NRCan energy efficiency standards; provincial utility rebate schedules',
+    },
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentResults = [];
+let compareBaseId = null;
+
+// ── ANALYSIS ──────────────────────────────────────────────────────────────────
+function runAnalysis() {
+  const province = document.getElementById('province').value;
+  const buildingType = document.getElementById('building-type').value;
+  const floorArea = parseFloat(document.getElementById('floor-area').value);
+  const currentFuel = document.getElementById('current-fuel').value;
+  const energySpend = parseFloat(document.getElementById('energy-spend').value);
+  const priority = document.querySelector('input[name="priority"]:checked')?.value || 'savings';
+
+  if (!province || !buildingType || !floorArea || !currentFuel || !energySpend) {
+    alert('Please fill in all fields to get your recommendations.'); return;
+  }
+
+  const pData = PROVINCE_DATA[province];
+
+  currentResults = INTERVENTIONS.map(iv => {
+    const savingsPct = iv.savingsMultiplier[currentFuel] || 0.2;
+    const carbonPct = iv.carbonMultiplier[currentFuel] || 0.2;
+    const suitability = iv.suitability[buildingType] || 0.7;
+
+    const annualSavings = Math.round(energySpend * savingsPct * suitability);
+    const carbonReduction = Math.round((energySpend * carbonPct * suitability * 0.8) / 10) * 10;
+
+    const avgCost = (iv.costRange[0] + iv.costRange[1]) / 2;
+    const adjustedCost = avgCost * (0.6 + (floorArea / 5000) * 0.8);
+    const estimatedCost = Math.round(Math.min(adjustedCost, iv.costRange[1] * 1.5) / 500) * 500;
+
+    const payback = annualSavings > 0 ? Math.round((estimatedCost / annualSavings) * 10) / 10 : 99;
+
+    let score = 0;
+    if (priority === 'savings') score = annualSavings * suitability;
+    else if (priority === 'carbon') score = carbonReduction * suitability;
+    else score = suitability * (100 / Math.max(payback, 0.5));
+
+    return { ...iv, annualSavings, carbonReduction, payback, estimatedCost, score, suitability, pData, province, buildingType, currentFuel, energySpend };
+  }).sort((a, b) => b.score - a.score);
+
+  renderResults(priority);
+  setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+// ── RENDER RESULTS ────────────────────────────────────────────────────────────
+function renderResults(priority) {
+  const el = document.getElementById('results');
+  el.style.display = 'block';
+  const [best, second, third, ...rest] = currentResults;
+  const maxSavings = currentResults[0].annualSavings;
+  const maxCarbon = currentResults[0].carbonReduction;
+  const priorityLabel = { savings: 'Maximized Savings', carbon: 'Carbon Reduction', payback: 'Shortest Payback' }[priority];
+
+  el.innerHTML = `
+    <div class="results-header">
+      <div class="results-title">Your Recommendations · ${priorityLabel}</div>
+      <div class="results-count">${currentResults.length} options analyzed</div>
+    </div>
+    ${renderHeroCard(best)}
+    <div class="cards-grid">
+      ${renderRecCard(second, 2, maxSavings, maxCarbon)}
+      ${renderRecCard(third, 3, maxSavings, maxCarbon)}
+    </div>
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <div class="section-divider-label">Additional Options</div>
+      <div class="section-divider-line"></div>
+    </div>
+    <div class="remaining-cards">
+      ${rest.map((r, i) => renderCompactCard(r, i + 4)).join('')}
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.querySelectorAll('.progress-fill').forEach(b => { b.style.width = b.dataset.width + '%'; });
+  }, 100);
+}
+
+function renderHeroCard(r) {
+  const reasons = buildReasons(r);
+  const calc = buildCalcData(r);
+  return `
+    <div class="hero-card">
+      <div class="hero-badge">Top Recommendation</div>
+      <div class="hero-title">${r.name}</div>
+      <div class="hero-subtitle">${r.category} · ${Math.round(r.suitability * 100)}% suitability for your building type</div>
+      <div class="hero-metrics">
+        <div class="metric-block">
+          <div class="metric-label">Annual Savings</div>
+          <div class="metric-value amber">$${r.annualSavings.toLocaleString()}</div>
+          <div class="metric-unit">CAD / year</div>
+        </div>
+        <div class="metric-block">
+          <div class="metric-label">Payback Period</div>
+          <div class="metric-value">${r.payback}</div>
+          <div class="metric-unit">years</div>
+        </div>
+        <div class="metric-block">
+          <div class="metric-label">Carbon Reduction</div>
+          <div class="metric-value green">${(r.carbonReduction / 1000).toFixed(1)}</div>
+          <div class="metric-unit">tonnes CO₂e / yr</div>
+        </div>
+      </div>
+      <div class="hero-reasons">
+        <div class="reasons-label">Why this is your best option</div>
+        ${reasons.map(rx => `<div class="reason-item"><div class="reason-dot"></div><div>${rx}</div></div>`).join('')}
+      </div>
+      <div class="hero-actions">
+        <button class="btn-compare" onclick="openCompare('${r.id}')">⇄ Compare</button>
+        <button class="btn-cost">Est. cost: $${r.estimatedCost.toLocaleString()}</button>
+        <button class="btn-expand-hero" onclick="toggleHeroExpand(this)">▾ See calculations</button>
+      </div>
+      <div class="hero-expand" id="hero-expand">
+        <div class="expand-grid">
+          <div>
+            <div class="expand-block-label">How we calculated this</div>
+            ${calc.map(c => `<div class="expand-calc-row"><span class="expand-calc-label">${c.label}</span><span class="expand-calc-val">${c.val}</span></div>`).join('')}
+            <div class="expand-sources">Sources: NRCan RETScreen benchmarks · ECCC National Inventory Report · CER provincial grid data · Canada Greener Homes program</div>
+          </div>
+          <div>
+            <div class="expand-block-label">Implementation steps</div>
+            <div class="expand-impl"><ul>${r.exploreData.implementation.map(s => `<li>${s}</li>`).join('')}</ul></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRecCard(r, rank, maxSavings, maxCarbon) {
+  const savingsPct = Math.round((r.annualSavings / maxSavings) * 100);
+  const carbonPct = Math.round((r.carbonReduction / maxCarbon) * 100);
+  const calc = buildCalcData(r);
+  return `
+    <div class="rec-card" id="card-${r.id}">
+      <div class="card-rank">#${rank} Option</div>
+      <div class="card-title">${r.name}</div>
+      <div class="card-subtitle">${r.category} · Est. $${r.estimatedCost.toLocaleString()}</div>
+      <div class="card-metrics">
+        <div>
+          <div class="card-metric-row">
+            <div class="card-metric-label">Annual Savings</div>
+            <div class="card-metric-val amber">$${r.annualSavings.toLocaleString()}</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" data-width="${savingsPct}" style="width:0%"></div></div>
+        </div>
+        <div>
+          <div class="card-metric-row">
+            <div class="card-metric-label">Carbon Reduction</div>
+            <div class="card-metric-val green">${(r.carbonReduction / 1000).toFixed(1)}t CO₂e</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" data-width="${carbonPct}" style="width:0%; background: linear-gradient(90deg, #16a34a, #4ade80)"></div></div>
+        </div>
+        <div class="card-metric-row">
+          <div class="card-metric-label">Payback</div>
+          <div class="card-metric-val">${r.payback} yrs</div>
+        </div>
+      </div>
+      <div class="card-btns">
+        <button class="card-compare-btn" onclick="openCompare('${r.id}')">⇄ Compare</button>
+        <button class="card-expand-btn" id="exp-btn-${r.id}" onclick="toggleCardExpand('${r.id}')">▾ Details</button>
+      </div>
+      <div class="card-expand-panel" id="exp-${r.id}">
+        <div class="ce-label">Calculation Inputs</div>
+        ${calc.map(c => `<div class="ce-row"><span class="ce-key">${c.label}</span><span class="ce-val">${c.val}</span></div>`).join('')}
+        <div class="ce-label" style="margin-top:14px;">Implementation</div>
+        <div class="ce-impl"><ul>${r.exploreData.implementation.slice(0,3).map(s => `<li>${s}</li>`).join('')}</ul></div>
+        <div class="ce-source">Sources: NRCan RETScreen · ECCC NIR · CER grid data</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCompactCard(r, rank) {
+  const calc = buildCalcData(r);
+  return `
+    <div class="compact-card">
+      <div class="compact-top">
+        <div class="compact-icon">${r.icon}</div>
+        <div>
+          <div class="compact-name">${r.name}</div>
+          <div class="compact-meta">$${r.annualSavings.toLocaleString()}/yr · ${r.payback}yr payback</div>
+        </div>
+      </div>
+      <div class="compact-btns">
+        <button class="compact-btn" onclick="openCompare('${r.id}')">⇄ Compare</button>
+        <button class="compact-btn" id="cexp-btn-${r.id}" onclick="toggleCompactExpand('${r.id}')">▾ Details</button>
+      </div>
+      <div class="compact-expand-panel" id="cexp-${r.id}">
+        ${calc.map(c => `<div class="ce-row"><span class="ce-key">${c.label}</span><span class="ce-val">${c.val}</span></div>`).join('')}
+        <div class="ce-source" style="margin-top:8px;">Sources: NRCan · ECCC · CER</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── EXPAND TOGGLES ────────────────────────────────────────────────────────────
+function toggleHeroExpand(btn) {
+  const panel = document.getElementById('hero-expand');
+  const isOpen = panel.classList.toggle('open');
+  btn.textContent = isOpen ? '▴ Hide calculations' : '▾ See calculations';
+}
+
+function toggleCardExpand(id) {
+  const panel = document.getElementById(`exp-${id}`);
+  const btn = document.getElementById(`exp-btn-${id}`);
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.textContent = isOpen ? '▴ Hide' : '▾ Details';
+}
+
+function toggleCompactExpand(id) {
+  const panel = document.getElementById(`cexp-${id}`);
+  const btn = document.getElementById(`cexp-btn-${id}`);
+  const isOpen = panel.classList.toggle('open');
+  btn.textContent = isOpen ? '▴ Hide' : '▾ Details';
+}
+
+// ── CALC DATA ─────────────────────────────────────────────────────────────────
+function buildCalcData(r) {
+  const savingsPct = Math.round((r.savingsMultiplier[r.currentFuel] || 0.2) * r.suitability * 100);
+  const carbonPct = Math.round((r.carbonMultiplier[r.currentFuel] || 0.2) * r.suitability * 100);
+  return [
+    { label: 'Annual energy spend', val: `$${r.energySpend.toLocaleString()}` },
+    { label: 'Savings rate (fuel × suitability)', val: `${savingsPct}%` },
+    { label: 'Est. annual savings', val: `$${r.annualSavings.toLocaleString()}` },
+    { label: 'Est. installed cost', val: `$${r.estimatedCost.toLocaleString()}` },
+    { label: 'Simple payback', val: `${r.payback} years` },
+    { label: 'Carbon reduction rate', val: `${carbonPct}%` },
+    { label: 'Carbon reduction', val: `${(r.carbonReduction / 1000).toFixed(2)} t CO₂e/yr` },
+    { label: 'Grid factor (${r.province})', val: `${r.pData.gridFactor} kg CO₂/kWh` },
+  ];
+}
+
+// ── REASONS ───────────────────────────────────────────────────────────────────
+function buildReasons(r) {
+  const pData = r.pData;
+  const reasons = [];
+  if (r.annualSavings > 2000) {
+    reasons.push(`Strong financial return of $${r.annualSavings.toLocaleString()}/year against an estimated $${r.estimatedCost.toLocaleString()} investment.`);
+  } else {
+    reasons.push(`Delivers $${r.annualSavings.toLocaleString()} in annual savings with a ${r.payback}-year payback period.`);
+  }
+  if (r.currentFuel === 'heating-oil' || r.currentFuel === 'propane') {
+    reasons.push(`${FUEL_LABELS[r.currentFuel]} carries a high emission factor — switching amplifies both the carbon and cost benefit.`);
+  } else if (r.currentFuel === 'natural-gas') {
+    reasons.push(`Natural gas prices in ${pData.label} at $${pData.gasRate}/m³ make this upgrade increasingly cost-competitive.`);
+  } else if (r.currentFuel === 'electric-baseboard') {
+    reasons.push(`Electric baseboard resistance heating is highly inefficient — any heat pump technology delivers immediate, substantial savings.`);
+  } else if (r.currentFuel === 'district-heating') {
+    reasons.push(`District heating systems offer limited individual control — this upgrade gives your building direct efficiency gains independent of the network.`);
+  }
+  if (pData.gridFactor < 0.05) {
+    reasons.push(`${pData.label}'s near-zero-emission grid (${pData.gridFactor} kg CO₂/kWh) means electrification delivers deep carbon cuts immediately.`);
+  } else if (pData.gridFactor > 0.4) {
+    reasons.push(`${pData.label}'s carbon-intensive grid (${pData.gridFactor} kg CO₂/kWh) means efficiency upgrades deliver more reliable decarbonization than fuel-switching alone.`);
+  }
+  if (r.suitability >= 0.9) {
+    reasons.push(`Highly suited to ${BUILDING_LABELS[r.buildingType]} buildings — ${r.description.split('.')[0].toLowerCase()}.`);
+  }
+  if (r.incentives?.length > 0) {
+    reasons.push(`Available incentives include ${r.incentives[0]}, which can meaningfully reduce net upfront cost.`);
+  }
+  return reasons.slice(0, 3);
+}
+
+// ── COMPARE MODAL ─────────────────────────────────────────────────────────────
+function openCompare(baseId) {
+  compareBaseId = baseId;
+  const base = currentResults.find(r => r.id === baseId);
+  document.getElementById('modalTitle').textContent = `Compare: ${base.name}`;
+  document.getElementById('modalBody').innerHTML = renderPickSecond(baseId);
+  document.getElementById('compareModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderPickSecond(excludeId) {
+  const others = currentResults.filter(r => r.id !== excludeId);
+  return `<div class="modal-pick">
+    <div class="modal-pick-label">Select an option to compare side-by-side:</div>
+    <div class="pick-grid">
+      ${others.map(r => `
+        <button class="pick-option" onclick="showComparison('${excludeId}','${r.id}')">
+          <div class="pick-option-name">${r.icon} ${r.name}</div>
+          <div class="pick-option-meta">$${r.annualSavings.toLocaleString()}/yr · ${r.payback}yr payback</div>
+        </button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function showComparison(idA, idB) {
+  const a = currentResults.find(r => r.id === idA);
+  const b = currentResults.find(r => r.id === idB);
+  const rankA = currentResults.findIndex(r => r.id === idA) + 1;
+  const rankB = currentResults.findIndex(r => r.id === idB) + 1;
+  const aWins = rankA < rankB;
+  document.getElementById('modalTitle').textContent = 'Side-by-Side Comparison';
+
+  const rows = [
+    { label: 'Category', valA: a.category, valB: b.category },
+    { label: 'Est. Install Cost', valA: `$${a.estimatedCost.toLocaleString()}`, valB: `$${b.estimatedCost.toLocaleString()}`, lowerBetter: true, numA: a.estimatedCost, numB: b.estimatedCost },
+    { label: 'Annual Savings', valA: `$${a.annualSavings.toLocaleString()}`, valB: `$${b.annualSavings.toLocaleString()}`, higherBetter: true, numA: a.annualSavings, numB: b.annualSavings },
+    { label: 'Payback Period', valA: `${a.payback} years`, valB: `${b.payback} years`, lowerBetter: true, numA: a.payback, numB: b.payback },
+    { label: 'Carbon Reduction', valA: `${(a.carbonReduction/1000).toFixed(1)}t CO₂e/yr`, valB: `${(b.carbonReduction/1000).toFixed(1)}t CO₂e/yr`, higherBetter: true, numA: a.carbonReduction, numB: b.carbonReduction },
+    { label: 'Suitability', valA: `${Math.round(a.suitability*100)}%`, valB: `${Math.round(b.suitability*100)}%`, higherBetter: true, numA: a.suitability, numB: b.suitability },
+  ];
+
+  function cls(row, isA) {
+    if (row.numA === undefined) return '';
+    const aIsBetter = row.higherBetter ? row.numA > row.numB : row.numA < row.numB;
+    if (isA) return aIsBetter ? 'better' : row.numA === row.numB ? '' : 'worse';
+    return !aIsBetter ? 'better' : row.numA === row.numB ? '' : 'worse';
+  }
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-compare">
+      <div class="compare-headers">
+        <div class="compare-header-cell label-col">Metric</div>
+        <div class="compare-col-header ${aWins ? 'winner' : ''}">
+          <div class="compare-col-name">${a.name}</div>
+          <div class="compare-col-badge">${aWins ? '★ Recommended' : `#${rankA} overall`}</div>
+        </div>
+        <div class="compare-col-header ${!aWins ? 'winner' : ''}">
+          <div class="compare-col-name">${b.name}</div>
+          <div class="compare-col-badge">${!aWins ? '★ Recommended' : `#${rankB} overall`}</div>
+        </div>
+      </div>
+      ${rows.map(row => `
+        <div class="compare-row">
+          <div class="compare-row-label">${row.label}</div>
+          <div class="compare-row-val ${cls(row, true)}">${row.valA}</div>
+          <div class="compare-row-val ${cls(row, false)}">${row.valB}</div>
+        </div>`).join('')}
+      <div class="compare-row" style="border-bottom:none; padding-top:20px;">
+        <div class="compare-row-label" style="font-size:12px;color:var(--text-muted)">Incentives</div>
+        <div class="compare-row-val" style="font-size:12px;font-family:'Plus Jakarta Sans';font-weight:400;color:var(--text-secondary)">${a.incentives.join(', ')}</div>
+        <div class="compare-row-val" style="font-size:12px;font-family:'Plus Jakarta Sans';font-weight:400;color:var(--text-secondary)">${b.incentives.join(', ')}</div>
+      </div>
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);text-align:center;">
+        <button onclick="document.getElementById('modalBody').innerHTML=renderPickSecond(compareBaseId)" style="padding:10px 20px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;">← Choose a different option</button>
+      </div>
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById('compareModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('compareModal')) closeModal();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── EXPLORE CARDS ─────────────────────────────────────────────────────────────
+const CATEGORY_COLORS = {
+  'Electrification': '#dcfce7',
+  'Efficiency': '#dbeafe',
+  'Generation': '#fef9c3',
+  'Controls': '#f3e8ff',
+  'Hybrid': '#fff7ed',
+};
+
+function renderExploreCards() {
+  const list = document.getElementById('exploreList');
+  list.innerHTML = INTERVENTIONS.map(iv => {
+    const bgColor = CATEGORY_COLORS[iv.category] || '#f1f5f9';
+    const ed = iv.exploreData;
+    return `
+      <div class="explore-card" id="ec-${iv.id}">
+        <div class="explore-card-header" onclick="toggleExplore('${iv.id}')">
+          <div class="explore-card-left">
+            <div class="explore-icon" style="background:${bgColor}">${iv.icon}</div>
+            <div>
+              <div class="explore-card-name">${iv.name}</div>
+              <div class="explore-card-tag">${iv.category}</div>
+            </div>
+          </div>
+          <div class="explore-card-right">
+            <span class="explore-pill pill-amber">${ed.paybackRange.split('–')[0].trim()}+ yr payback</span>
+            <span class="explore-pill pill-teal">${ed.typicalSavings.split('%')[0]}%+ savings</span>
+            <span class="explore-chevron">▼</span>
+          </div>
+        </div>
+        <div class="explore-body">
+          <div class="explore-desc-full">${ed.whatItIs}</div>
+          <div class="explore-body-grid">
+            <div>
+              <div class="eb-block-label">Typical Numbers</div>
+              <div class="eb-stat-row"><span class="eb-stat-key">Cost range</span><span class="eb-stat-val">${ed.typicalCost}</span></div>
+              <div class="eb-stat-row"><span class="eb-stat-key">Annual savings</span><span class="eb-stat-val">${ed.typicalSavings}</span></div>
+              <div class="eb-stat-row"><span class="eb-stat-key">Payback</span><span class="eb-stat-val">${ed.paybackRange}</span></div>
+              <div class="eb-stat-row"><span class="eb-stat-key">Best for</span><span class="eb-stat-val" style="font-size:11px;white-space:normal;text-align:right;max-width:180px">${ed.bestFor.split('.')[0]}</span></div>
+            </div>
+            <div>
+              <div class="eb-block-label">How to Get Started</div>
+              <div class="eb-text"><ol>${ed.implementation.map(s => `<li>${s}</li>`).join('')}</ol></div>
+            </div>
+            <div>
+              <div class="eb-block-label">Available Incentives</div>
+              <div class="eb-text"><ul>${iv.incentives.map(s => `<li>${s}</li>`).join('')}</ul></div>
+              <div class="ce-source" style="margin-top:12px">${ed.sources}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleExplore(id) {
+  const card = document.getElementById(`ec-${id}`);
+  card.classList.toggle('open');
+}
+
+renderExploreCards();
+</script>
+</body>
+</html>
