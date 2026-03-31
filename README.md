@@ -2,7 +2,7 @@
 
 **Live tool:** [moezusb.github.io/building-energy-advisor](https://moezusb.github.io/building-energy-advisor/)
 
-A browser-based screening tool that takes a building profile — province, type, floor area, heating fuel, and energy spend — and returns ranked decarbonization recommendations with estimated annual savings, payback periods, and carbon reduction.
+A browser-based screening tool that takes a building profile - province, type, floor area, heating fuel, and energy spend - and returns ranked decarbonization recommendations with estimated annual savings, payback periods, and carbon reduction.
 
 ## What it does
 
@@ -26,6 +26,3 @@ Estimates are based on publicly available Canadian federal datasets. This is a s
 | NRCan RETScreen | Savings multiplier benchmarks by intervention and fuel type |
 | Provincial utility tariff schedules | Electricity and gas rates (Q1 2026) |
 
-## Technical notes
-
-Single HTML file — no dependencies, no build step, no backend. Deploys directly to GitHub Pages.
