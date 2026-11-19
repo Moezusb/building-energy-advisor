@@ -1,3 +1,5 @@
+> **Superseded.** This is version 1. The maintained version, with postal-code climate data, financing scenarios, and updated rates, is **[Building Energy Advisor V2](https://github.com/Moezusb/energy-advisor-v2)** ([live tool](https://moezusb.github.io/energy-advisor-v2/)). This repository is kept for reference.
+
 # building-energy-advisor
 
 **Live tool:** [moezusb.github.io/building-energy-advisor](https://moezusb.github.io/building-energy-advisor/)
